@@ -14,13 +14,23 @@
 
 #include"bleSetup.h"
 #include "morseKey.h"
-#include "KeyCodes.h"
 
 String ditKey = "37";
 String dahKey = "2D";
+String enterKey = "28";
+String GUI = "E3";
 
-KeyboardKey periodKey(6, ditKey, "120", speedTyper);
-KeyboardKey hyphonKey(A3, dahKey, "121", speedTyper);
+int debounceTime = 100;
+
+int speedTyper = 300;
+int speedSense = 3;
+
+KeyboardKey shortKey(6, enterKey, debounceTime);
+KeyboardKey longKey(
+
+ModifierKey shiftKey(5);
+
+AccessKey homeButton(6, enterKey, 100);
 
 void setup(void)
 {
@@ -29,9 +39,8 @@ void setup(void)
 
 void loop(void)
 {
-  boolean shiftValue = false; //shiftKey.Check();
-  speedTyper = 500;//analogRead(A2)/speedSense;
+  boolean shiftValue = shiftKey.Check();
+  speedTyper = analogRead(A2)/speedSense;
 
-  periodKey.Press(shiftValue);
-  hyphonKey.Press(shiftValue);
+  homeButton.Press();
 }
