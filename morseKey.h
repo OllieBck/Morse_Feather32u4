@@ -4,6 +4,9 @@ class KeyboardKey {
     String keyValue;
     int pressSpeed;
     int debounceDelay;
+    int freq;
+    int sndLength;
+    int sndPin;
 
     int keyFirstPress = true;
 
@@ -12,11 +15,14 @@ class KeyboardKey {
 
 
   public:
-    KeyboardKey (int pin, String letterValue, int debouncerTime)
+    KeyboardKey (int pin, String letterValue, int debouncerTime, int speakerPin, int freqValue, int sndDuration)
     {
       keyPin = pin;
       keyValue = letterValue;
       debounceDelay = debouncerTime;
+      freq = freqValue;
+      sndLength = sndDuration;
+      sndPin = speakerPin;
       pinMode(keyPin, INPUT_PULLUP);
     }
 
@@ -36,6 +42,8 @@ class KeyboardKey {
       if (keyState == LOW) {
         if (millis() - lastDebounceTime > debounceDelay) {
           if (keyFirstPress == true) {
+            int playLength = sndLength - pressSpeed;
+            tone(sndPin, freq, playLength/2);
             ble.print("AT+BLEKEYBOARDCODE=");
             ble.print(modifierValue);
             ble.print("-00-");
@@ -47,6 +55,8 @@ class KeyboardKey {
           }
           while (digitalRead(keyPin) == LOW && millis() - lastDebounceTime > debounceDelay) {
             if (millis() - lastDebounceTime > pressSpeed) {
+              int playLength = sndLength - pressSpeed;
+              tone(sndPin, freq, playLength/2);
               ble.print("AT+BLEKEYBOARDCODE=");
               ble.print(modifierValue);
               ble.print("-00-");
@@ -124,6 +134,11 @@ class AccessKey {
     unsigned long lastDebounceTime = 0;
     unsigned long heldTime = 0;
 
+    int change = 0;
+    int state = 0;
+
+    boolean modifierState = false;
+
   public:
     AccessKey (int pin, String letterValue, int debouncerTime)
     {
@@ -149,5 +164,32 @@ class AccessKey {
           }
           lastDebounceTime = millis();
         }
+    }
+
+    boolean Check()
+    {
+      int keyState = digitalRead(keyPin);
+
+      if (keyState)
+      {
+        state = 0;
+      }
+
+      else {
+        state = 1;
+      }
+
+      if (state != change) {
+        if (state == LOW) {
+          digitalWrite(LED_BUILTIN, HIGH);
+          modifierState = !modifierState;
+          delay(5);
+        }
+        else {
+          digitalWrite(LED_BUILTIN, LOW);
+        }
+      }
+      change = state;
+      return modifierState;
     }
 };
