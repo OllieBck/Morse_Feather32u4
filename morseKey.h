@@ -2,22 +2,24 @@ class KeyboardKey {
     int keyPin;      // the number of the button pin
     String modifierValue;
     String keyValue;
+    String letterValue;
+    String altLetterValue;
     int pressSpeed;
     int debounceDelay;
     int freq;
     int sndLength;
     int sndPin;
 
-    int keyFirstPress = true;
+    bool keyFirstPress = true;
 
     unsigned long lastDebounceTime = 0;
-    unsigned long heldTime = 0;
-
 
   public:
-    KeyboardKey (int pin, String letterValue, int debouncerTime, int speakerPin, int freqValue, int sndDuration)
+    KeyboardKey (int pin, String primaryKeyValue, String secondaryKeyValue, int debouncerTime, int speakerPin, int freqValue, int sndDuration)
     {
       keyPin = pin;
+      letterValue = primaryKeyValue;
+      altLetterValue = secondaryKeyValue;
       keyValue = letterValue;
       debounceDelay = debouncerTime;
       freq = freqValue;
@@ -29,24 +31,22 @@ class KeyboardKey {
     void Press(boolean isShiftPressed, int ditdahTimer)
     {
       int keyState = digitalRead(keyPin);
-      boolean shiftCheck = isShiftPressed;
+      bool shiftCheck = isShiftPressed;
       pressSpeed = ditdahTimer;
 
       if (isShiftPressed) {
-        modifierValue = "02";
+        keyValue = altLetterValue;
       }
       else {
-        modifierValue = "00";
+        keyValue = letterValue;
       }
 
       if (keyState == LOW) {
         if (millis() - lastDebounceTime > debounceDelay) {
           if (keyFirstPress == true) {
             int playLength = sndLength - pressSpeed;
-            tone(sndPin, freq, playLength/2);
-            ble.print("AT+BLEKEYBOARDCODE=");
-            ble.print(modifierValue);
-            ble.print("-00-");
+            tone(sndPin, freq, playLength / 2);
+            ble.print("AT+BLEKEYBOARDCODE=00-00-");
             ble.print(keyValue);
             ble.println("-00-00");
             ble.println("AT+BLEKEYBOARDCODE=00-00");
@@ -56,10 +56,8 @@ class KeyboardKey {
           while (digitalRead(keyPin) == LOW && millis() - lastDebounceTime > debounceDelay) {
             if (millis() - lastDebounceTime > pressSpeed) {
               int playLength = sndLength - pressSpeed;
-              tone(sndPin, freq, playLength/2);
-              ble.print("AT+BLEKEYBOARDCODE=");
-              ble.print(modifierValue);
-              ble.print("-00-");
+              tone(sndPin, freq, playLength / 2);
+              ble.print("AT+BLEKEYBOARDCODE=00-00-");
               ble.print(keyValue);
               ble.println("-00-00");
               ble.println("AT+BLEKEYBOARDCODE=00-00");
@@ -77,22 +75,26 @@ class KeyboardKey {
 
 /****************************************************************************************************/
 
-class ModifierKey
-{
+class ModifierKey {
     // Class Member Variables
     // These are initialized at startup
     int keyPin;      // the number of the button pin
 
-    // These maintain the current state
-    int change = 0;
-    int state = 0;
+    int debounceDelay;
 
-    boolean modifierState = false;
+    unsigned long lastDebounceTime = 0;
+
+    // These maintain the current state
+    bool lastButtonState = HIGH;
+    bool buttonState;
+
+    bool modifierState = false;
 
   public:
-    ModifierKey (int pin)
+    ModifierKey (int pin, int debouncerLength)
     {
       keyPin = pin;
+      debounceDelay = debouncerLength;
       pinMode(keyPin, INPUT_PULLUP);
     }
 
@@ -100,26 +102,20 @@ class ModifierKey
     {
       int keyState = digitalRead(keyPin);
 
-      if (keyState)
-      {
-        state = 0;
+      if (keyState != lastButtonState) {
+        lastDebounceTime = millis();
       }
 
-      else {
-        state = 1;
-      }
+      if ((millis() - lastDebounceTime) > debounceDelay) {
+        if (keyState != buttonState) {
+          buttonState = keyState;
 
-      if (state != change) {
-        if (state == LOW) {
-          digitalWrite(LED_BUILTIN, HIGH);
-          modifierState = !modifierState;
-          delay(5);
-        }
-        else {
-          digitalWrite(LED_BUILTIN, LOW);
+          if (buttonState == LOW) {
+            modifierState = !modifierState;
+          }
         }
       }
-      change = state;
+      lastButtonState = keyState;
       return modifierState;
     }
 };
@@ -132,12 +128,11 @@ class AccessKey {
     int debounceDelay;
 
     unsigned long lastDebounceTime = 0;
-    unsigned long heldTime = 0;
 
-    int change = 0;
-    int state = 0;
+    bool lastButtonState = HIGH;
+    bool buttonState;
 
-    boolean modifierState = false;
+    bool modifierState = false;
 
   public:
     AccessKey (int pin, String letterValue, int debouncerTime)
@@ -154,42 +149,42 @@ class AccessKey {
 
       if (keyState == LOW) {
         if (millis() - lastDebounceTime > debounceDelay) {
-            ble.println("AT+BLEKEYBOARDCODE=E3-00-28-00-00");
-            ble.println("AT+BLEKEYBOARDCODE=00-00");
-            ble.println("AT+BLEKEYBOARDCODE=E3-00-28-00-00");
-            ble.println("AT+BLEKEYBOARDCODE=00-00");
-            ble.println("AT+BLEKEYBOARDCODE=E3-00-28-00-00");
-            ble.println("AT+BLEKEYBOARDCODE=00-00");
-            lastDebounceTime = millis();
-          }
+          ble.println("AT+BLEKEYBOARDCODE=E3-00-28-00-00");
+          ble.println("AT+BLEKEYBOARDCODE=00-00");
+          ble.println("AT+BLEKEYBOARDCODE=E3-00-28-00-00");
+          ble.println("AT+BLEKEYBOARDCODE=00-00");
+          ble.println("AT+BLEKEYBOARDCODE=E3-00-28-00-00");
+          ble.println("AT+BLEKEYBOARDCODE=00-00");
           lastDebounceTime = millis();
         }
+        lastDebounceTime = millis();
+      }
     }
 
     boolean Check()
     {
       int keyState = digitalRead(keyPin);
 
-      if (keyState)
-      {
-        state = 0;
+      if (keyState != lastButtonState) {
+        lastDebounceTime = millis();
       }
 
-      else {
-        state = 1;
-      }
+      if ((millis() - lastDebounceTime) > debounceDelay) {
+        if (keyState != buttonState) {
+          buttonState = keyState;
 
-      if (state != change) {
-        if (state == LOW) {
-          digitalWrite(LED_BUILTIN, HIGH);
-          modifierState = !modifierState;
-          delay(5);
-        }
-        else {
-          digitalWrite(LED_BUILTIN, LOW);
+          if (buttonState == LOW) {
+            modifierState = !modifierState;
+            ble.println("AT+BLEKEYBOARDCODE=E3-00-28-00-00");
+            ble.println("AT+BLEKEYBOARDCODE=00-00");
+            ble.println("AT+BLEKEYBOARDCODE=E3-00-28-00-00");
+            ble.println("AT+BLEKEYBOARDCODE=00-00");
+            ble.println("AT+BLEKEYBOARDCODE=E3-00-28-00-00");
+            ble.println("AT+BLEKEYBOARDCODE=00-00");
+          }
         }
       }
-      change = state;
+      lastButtonState = keyState;
       return modifierState;
     }
 };

@@ -15,10 +15,14 @@
 #include"bleSetup.h"
 #include "morseKey.h"
 
+int ditPin = 6;
+int dahPin = 5;
+int buzzerPin = 11;
+
 String ditKey = "37";
 String dahKey = "2D";
-String enterKey = "28";
-String GUI = "E3";
+String altDitKey = "44";
+String altDahKey = "45";
 
 int debounceTime = 100;
 
@@ -31,9 +35,14 @@ int dahSoundDuration = 450;
 int speedTyper = 300;
 int speedSense = 3;
 
-KeyboardKey shortKey(6, ditKey, debounceTime, 11, ditSound, ditSoundDuration);
-KeyboardKey longKey(5, dahKey, debounceTime, 11, dahSound, dahSoundDuration);
-AccessKey accessButton(10, enterKey, 100);
+int accessPin = 10;
+String enterKey = "28";
+
+KeyboardKey shortKey(ditPin, ditKey, altDitKey, debounceTime, buzzerPin, ditSound, ditSoundDuration);
+KeyboardKey longKey(dahPin, dahKey, altDahKey, debounceTime, buzzerPin, dahSound, dahSoundDuration);
+AccessKey accessButton(accessPin, enterKey, debounceTime);
+
+//ModifierKey accessButton(accessPin, debounceTime);
 
 void setup(void)
 {
@@ -42,12 +51,12 @@ void setup(void)
 
 void loop(void)
 {
-  boolean shiftValue = accessButton.Check();
-  accessButton.Press();
-  
+   
+  bool shiftValue = accessButton.Check();
+
   //speedTyper = analogRead(A2)/speedSense;
 
   shortKey.Press(shiftValue, speedTyper);
   longKey.Press(shiftValue, speedTyper);
-  
+
 }
