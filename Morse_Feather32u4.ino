@@ -11,52 +11,68 @@
   All text above, and the splash screen below must be included in
   any redistribution
 *********************************************************************/
-
+#include<Keyboard.h>
 #include"bleSetup.h"
 #include "morseKey.h"
 
+/* Global to both setups */
+int buzzerPin = 11;
+int debounceTime = 100;
 int ditPin = 6;
 int dahPin = 5;
-int buzzerPin = 11;
-
-String ditKey = "37";
-String dahKey = "2D";
-String altDitKey = "44";
-String altDahKey = "45";
-
-int debounceTime = 100;
-
 int ditSound = 880;
 int dahSound = 500;
-
 int ditSoundDuration = 400;
 int dahSoundDuration = 450;
-
 int speedTyper = 300;
 int speedSense = 3;
-
 int accessPin = 10;
-String enterKey = "28";
+
+/* Global for BLE Keyboard Setup
+String bleDitKey = "37";
+String bleDahKey = "2D";
+String bleAltDitKey = "44";
+String bleAltDahKey = "45";
+String bleEnterKey = "28"; 
+
+BLEKeyboardKey bleShortKey(ditPin, bleDitKey, bleAltDitKey, debounceTime, buzzerPin, ditSound, ditSoundDuration);
+BLEKeyboardKey bleLongKey(dahPin, bleDahKey, bleAltDahKey, debounceTime, buzzerPin, dahSound, dahSoundDuration);
+BLEAccessKey bleAccessButton(accessPin, debounceTime);
+*/
+
+/* Global for USB Keyboard Setup */
+char ditKey = 46;
+char dahKey = 45;
+char altDitKey = 204;
+char altDahKey = 205;
 
 KeyboardKey shortKey(ditPin, ditKey, altDitKey, debounceTime, buzzerPin, ditSound, ditSoundDuration);
 KeyboardKey longKey(dahPin, dahKey, altDahKey, debounceTime, buzzerPin, dahSound, dahSoundDuration);
-AccessKey accessButton(accessPin, enterKey, debounceTime);
+AccessKey accessButton(accessPin, debounceTime);
+
+
 
 //ModifierKey accessButton(accessPin, debounceTime);
 
 void setup(void)
 {
+  Serial.begin(115200);
   bleSetup();
+  Keyboard.begin();
 }
 
 void loop(void)
 {
-   
-  bool shiftValue = accessButton.Check();
-
   //speedTyper = analogRead(A2)/speedSense;
 
+  bool shiftValue = accessButton.Check();
   shortKey.Press(shiftValue, speedTyper);
   longKey.Press(shiftValue, speedTyper);
-
+  
+  /* 
+  bool shiftValue = bleAccessButton.Check();
+  bleShortKey.Press(shiftValue, speedTyper);
+  bleLongKey.Press(shiftValue, speedTyper);
+  */
+  
 }
