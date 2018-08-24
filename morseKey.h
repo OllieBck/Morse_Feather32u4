@@ -237,7 +237,7 @@ class KeyboardKey {
         if (millis() - lastDebounceTime > debounceDelay) {
           if (keyFirstPress == true) {
             int playLength = sndLength - pressSpeed;
-            tone(sndPin, freq, playLength / 2);
+            tone(sndPin, freq, playLength / 3);
             Keyboard.press(keyValue);
             Keyboard.release(keyValue);
             keyFirstPress = false;
@@ -246,7 +246,7 @@ class KeyboardKey {
           while (digitalRead(keyPin) == LOW && millis() - lastDebounceTime > debounceDelay) {
             if (millis() - lastDebounceTime > pressSpeed) {
               int playLength = sndLength - pressSpeed;
-              tone(sndPin, freq, playLength / 2);
+              tone(sndPin, freq, playLength / 3);
               Keyboard.press(keyValue);
               Keyboard.release(keyValue);
               lastDebounceTime = millis();
